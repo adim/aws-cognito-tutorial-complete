@@ -4,16 +4,22 @@ import 'bulma/css/bulma.min.css';
 import './index.css';
 import App from './App';
 import Amplify from "aws-amplify";
-import config from "./config";
 import * as serviceWorker from './serviceWorker';
-
 Amplify.configure({
   Auth: {
-    mandatorySignIn: true,
-    region: config.cognito.REGION,
-    userPoolId: config.cognito.USER_POOL_ID,
-    userPoolWebClientId: config.cognito.APP_CLIENT_ID
+    //mandatorySignIn: true,
+    region: process.env.REACT_APP_AWS_REGION,
+    userPoolId: process.env.REACT_APP_AWS_USER_POOL_ID,
+    userPoolWebClientId: process.env.REACT_APP_AWS_APP_CLIENT_ID,
+    identityPoolId: process.env.REACT_APP_AWS_IDENTITY_POOL_ID
+  },
+  Storage: {
+    bucket: process.env.REACT_APP_AWS_S3_BUCKET,
+    level: process.env.REACT_APP_AWS_UPLOAD_FOLDER,
+    region: process.env.REACT_APP_AWS_REGION,
+    identityPoolId: process.env.REACT_APP_AWS_IDENTITY_POOL_ID
   }
+
 });
 
 ReactDOM.render(<App />, document.getElementById('root'));

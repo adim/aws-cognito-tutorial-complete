@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import FormErrors from "../FormErrors";
 import Validate from "../utility/FormValidation";
 import { Auth } from "aws-amplify";
+import Storage from "@aws-amplify/storage";
+import uuidv4 from 'uuid/v4';
+
 
 class Register extends Component {
   state = {
@@ -25,6 +28,29 @@ class Register extends Component {
       }
     });
   }
+  uploadImage = () => {
+    Storage.configure({
+      bucket: process.env.REACT_APP_AWS_S3_BUCKET,
+      level: process.env.REACT_APP_AWS_UPLOAD_FOLDER,
+      region: process.env.REACT_APP_AWS_REGION,
+      identityPoolId: process.env.REACT_APP_AWS_IDENTITY_POOL_ID
+    });
+
+    let n = this.upload.files[0].name.lastIndexOf(".");
+    let ext = this.upload.files[0].name.substring(n);
+    let file_name = uuidv4() + ext;
+    Storage.put(`${file_name}`,
+      this.upload.files[0],
+      { contentType: this.upload.files[0].type })
+      .then(result => {
+        this.upload = null;
+        this.setState({ uplad_image: `https://s3.amazonaws.com/${process.env.REACT_APP_AWS_S3_BUCKET}/public/${file_name}` });
+        this.setState({ response: "Success uploading file!" });
+      })
+      .catch(err => {
+        this.setState({ response: `Cannot uploading file: ${err}` });
+      });
+  };
 
   handleSubmit = async event => {
     event.preventDefault();
@@ -45,7 +71,11 @@ class Register extends Component {
         username,
         password,
         attributes: {
-          email: email
+          email: email,
+          phone_number: '+12135555555',
+          name: 'mu name',
+          zoneinfo: "US",
+          'custom:instagramId': '12345'
         }
       });
       this.props.history.push("/welcome");
@@ -79,8 +109,8 @@ class Register extends Component {
           <form onSubmit={this.handleSubmit}>
             <div className="field">
               <p className="control">
-                <input 
-                  className="input" 
+                <input
+                  className="input"
                   type="text"
                   id="username"
                   aria-describedby="userNameHelp"
@@ -92,8 +122,8 @@ class Register extends Component {
             </div>
             <div className="field">
               <p className="control has-icons-left has-icons-right">
-                <input 
-                  className="input" 
+                <input
+                  className="input"
                   type="email"
                   id="email"
                   aria-describedby="emailHelp"
@@ -108,8 +138,8 @@ class Register extends Component {
             </div>
             <div className="field">
               <p className="control has-icons-left">
-                <input 
-                  className="input" 
+                <input
+                  className="input"
                   type="password"
                   id="password"
                   placeholder="Password"
@@ -123,8 +153,8 @@ class Register extends Component {
             </div>
             <div className="field">
               <p className="control has-icons-left">
-                <input 
-                  className="input" 
+                <input
+                  className="input"
                   type="password"
                   id="confirmpassword"
                   placeholder="Confirm password"
@@ -149,6 +179,35 @@ class Register extends Component {
               </p>
             </div>
           </form>
+
+          <h2>S3 Upload example...</h2>
+          <input
+            type="file"
+            accept="image/png, image/jpeg"
+            style={{ display: "none" }}
+            ref={ref => (this.upload = ref)}
+            onChange={e =>
+              this.setState({
+                imageFile: this.upload.files[0],
+                imageName: this.upload.files[0].name
+              })
+            }
+          />
+          <input value={this.state.imageName} placeholder="Select file" />
+          <button
+            onClick={e => {
+              this.upload.value = null;
+              this.upload.click();
+            }}
+            loading={this.state.uploading}
+          >
+            Browse
+        </button>
+
+          <button onClick={this.uploadImage}> Upload File </button>
+          {!!this.state.response && <div>{this.state.response}</div>}
+          <br />
+          <img src={this.state.uplad_image} />
         </div>
       </section>
     );
